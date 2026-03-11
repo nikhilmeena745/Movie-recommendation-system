@@ -8,17 +8,7 @@ st.set_page_config(
     page_icon="🍿",
     layout="wide"
 )
-st.markdown("""
-    <style>
-    .main {
-        background-color: #0e1117;
-    }
-    stCaption {
-        font-weight: bold;
-        color: #ff4b4b;
-    }
-    </style>
-    """, unsafe_all_raw_html=True)
+
 
 # 1. FIX: The function must wrap the logic and use quotes for the URL
 def fetch_poster(movie_id):
