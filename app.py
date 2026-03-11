@@ -52,7 +52,7 @@ selected_movie_name = st.selectbox(
 
 
 
-if st.sidebar.button('Recommend'):
+if st.button('Recommend'):
     # This creates the loading animation
     with st.spinner('Searching for similar movies...'):
         names, posters = recommend(selected_movie_name)
