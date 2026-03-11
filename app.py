@@ -49,12 +49,6 @@ selected_movie_name = st.selectbox(
     movies['title'].values
 )
 
-# Move your selection to the sidebar
-st.sidebar.title("🎬 Movie Matcher")
-selected_movie_name = st.sidebar.selectbox(
-    'Select a movie to get recommendations:',
-    movies['title'].values
-)
 
 
 
