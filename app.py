@@ -3,6 +3,22 @@ import pickle
 import pandas as pd
 import requests
 
+st.set_page_config(
+    page_title="Movie Recommender",
+    page_icon="🍿",
+    layout="wide"
+)
+st.markdown("""
+    <style>
+    .main {
+        background-color: #0e1117;
+    }
+    stCaption {
+        font-weight: bold;
+        color: #ff4b4b;
+    }
+    </style>
+    """, unsafe_all_raw_html=True)
 
 # 1. FIX: The function must wrap the logic and use quotes for the URL
 def fetch_poster(movie_id):
@@ -43,7 +59,16 @@ selected_movie_name = st.selectbox(
     movies['title'].values
 )
 
-if st.button('Recommend'):
+# Move your selection to the sidebar
+st.sidebar.title("🎬 Movie Matcher")
+selected_movie_name = st.sidebar.selectbox(
+    'Select a movie to get recommendations:',
+    movies['title'].values
+)
+
+
+
+if st.sidebar.button('Recommend'):
     # This creates the loading animation
     with st.spinner('Searching for similar movies...'):
         names, posters = recommend(selected_movie_name)
@@ -55,3 +80,6 @@ if st.button('Recommend'):
             # Use caption for titles to keep them neat, or stick with text
             st.caption(names[i])
             st.image(posters[i])
+            st.write(f"🔥 {90 - i * 2}% Match")
+
+
