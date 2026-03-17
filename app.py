@@ -79,9 +79,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 5. SIDEBAR ---
-st.sidebar.title("🔍 Filters")
-min_rating = st.sidebar.slider("Minimum Rating", 0.0, 10.0, 5.0)
+
 
 # --- 6. HEADER & SEARCH ---
 st.title('CineMatch Pro')
