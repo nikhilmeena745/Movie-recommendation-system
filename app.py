@@ -200,14 +200,8 @@ with col_search:
 # --- 7. GET RECOMMENDATIONS BUTTON ---
 if st.button('🎯 Get Recommendations'):
     with st.spinner('Fetching recommendations and live ratings...'):
-        recs = get_recommendations(selected_movie_name, min_rating=min_rating)
+        recs = get_recommendations(selected_movie_name)
         st.session_state['recs'] = recs
-
-        if not recs:
-            st.warning(
-                f"No recommendations found with rating ≥ {min_rating}. "
-                "Try lowering the minimum rating filter."
-            )
 
 
 # --- 8. DISPLAY RECOMMENDATIONS ---
