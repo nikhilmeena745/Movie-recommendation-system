@@ -14,6 +14,29 @@ def load_data():
     return movies, similarity
 
 
+@st.dialog("Movie Overview")
+def show_movie_details(movie_id):
+    # Fetch data from TMDB
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=98d38df69b8f66e1b16e9f207c51a8a6"
+    response = requests.get(url).json()
+
+    # Create the layout inside the dialog
+    col1, col2 = st.columns([1, 2])
+
+    with col1:
+        st.image(f"https://image.tmdb.org/t/p/w500/{response.get('poster_path')}")
+
+    with col2:
+        st.subheader(response.get('title'))
+        st.write(f"**Release Date:** {response.get('release_date')}")
+        st.write(f"**Rating:** ⭐ {response.get('vote_average')}/10")
+        st.write(f"**Description:**")
+        st.write(response.get('overview'))
+
+    # Optional: Link to TMDB page
+    st.link_button("View on TMDB", f"https://www.themoviedb.org/movie/{movie_id}")
+
+
 movies, similarity = load_data()
 
 
@@ -61,13 +84,14 @@ selected_movie = st.selectbox("Select a movie:", movies['title'].values)
 if st.button('Get Recommendations'):
     st.session_state['recommendations'] = get_recommendations(selected_movie)
 
+# Check if recommendations exist in session state
 if 'recommendations' in st.session_state:
     cols = st.columns(5)
     for i, movie in enumerate(st.session_state['recommendations']):
         with cols[i]:
             st.image(fetch_poster(movie['tmdb_id']))
             st.caption(movie['title'])
-            # Details button now works because recommendations are in session state
+
+            # Use the unique tmdb_id for the button key
             if st.button("Details", key=f"details_{movie['tmdb_id']}"):
-                st.write(f"Showing details for ID: {movie['tmdb_id']}")
-                # Call your show_details(movie['tmdb_id']) here
+                show_movie_details(movie['tmdb_id'])
