@@ -16,25 +16,43 @@ def load_data():
 
 @st.dialog("Movie Overview")
 def show_movie_details(movie_id):
-    # Fetch data from TMDB
+    # Fetch Basic Info
     url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=98d38df69b8f66e1b16e9f207c51a8a6"
     response = requests.get(url).json()
 
-    # Create the layout inside the dialog
+    # Fetch Video/Trailer Info
+    video_url = f"https://api.themoviedb.org/3/movie/{movie_id}/videos?api_key=98d38df69b8f66e1b16e9f207c51a8a6"
+    video_response = requests.get(video_url).json()
+
+    # Find the official YouTube trailer from the results
+    trailer_key = None
+    if 'results' in video_response:
+        for video in video_response['results']:
+            if video['type'] == 'Trailer' and video['site'] == 'YouTube':
+                trailer_key = video['key']
+                break
+
+    # --- UI Layout inside Dialog ---
     col1, col2 = st.columns([1, 2])
 
     with col1:
         st.image(f"https://image.tmdb.org/t/p/w500/{response.get('poster_path')}")
+        st.write(f"⭐ **{response.get('vote_average', 0):.1f}/10**")
 
     with col2:
         st.subheader(response.get('title'))
-        st.write(f"**Release Date:** {response.get('release_date')}")
-        st.write(f"**Rating:** ⭐ {response.get('vote_average')}/10")
-        st.write(f"**Description:**")
+        st.caption(f"Released: {response.get('release_date')}")
         st.write(response.get('overview'))
-
-    # Optional: Link to TMDB page
     st.link_button("View on TMDB", f"https://www.themoviedb.org/movie/{movie_id}")
+
+    # --- Add the Trailer below the description ---
+    if trailer_key:
+        st.write("---")
+        st.write("### 🎬 Watch Trailer")
+        st.video(f"https://www.youtube.com/watch?v={trailer_key}")
+    else:
+        st.info("Trailer not available for this movie.")
+
 
 
 movies, similarity = load_data()
