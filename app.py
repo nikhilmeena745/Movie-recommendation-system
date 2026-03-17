@@ -3,8 +3,9 @@ import pickle
 import pandas as pd
 import requests
 
-# --- 1. SET PAGE CONFIG ---
-st.set_page_config(page_title="CineMatch Pro", layout="wide", page_icon="🎬")
+
+
+
 
 # --- 2. CUSTOM CSS (The "Professional" Look) ---
 st.markdown("""
@@ -78,8 +79,6 @@ def show_details(movie_id):
             st.video(f"https://www.youtube.com/watch?v={trailer['key']}")
 
 
-# --- 5. DYNAMIC TRENDING ROW ---
-st.markdown("### 🔥 Trending This Week")
 
 try:
     trending_url = "https://api.themoviedb.org/3/trending/movie/week?api_key=98d38df69b8f66e1b16e9f207c51a8a6"
@@ -154,18 +153,49 @@ def fetch_poster(movie_id):
     # PROFESSIONAL FALLBACK: This prevents the broken "0" icon
     return "https://via.placeholder.com/500x750?text=No+Poster+Available"
 
-# --- 7. DISPLAY GRID ---
+
+st.set_page_config(page_title="CineMatch Pro", layout="wide", page_icon="🎬")
+st.title('CineMatch Pro')
+selected_movie = st.selectbox("Search for a movie you liked:", movies['title'].values)
+
+
+def get_recommendations(movie_title):
+    # Find the index of the movie
+    idx = movies[movies['title'] == movie_title].index[0]
+    distances = sorted(list(enumerate(similarity[idx])), reverse=True, key=lambda x: x[1])[1:6]
+
+    recommendation_list = []
+    for i in distances:
+        movie_idx = i[0]
+        # Append movie info to list
+        recommendation_list.append(movies.iloc[movie_idx])
+    return recommendation_list
+
+st.set_page_config(page_title="CineMatch Pro", layout="wide", page_icon="🎬")
+st.title('CineMatch Pro')
+selected_movie = st.selectbox("Search for a movie you liked:", movies['title'].values)
+
+
+if st.button('Get Recommendations'):
+    # Your recommendation logic here...
+    st.session_state['recs'] = get_recommendations(selected_movie)
+
+# --- 3. RECOMMENDATION RESULTS (Display immediately under search) ---
 if 'recs' in st.session_state:
+    st.markdown("### 🎯 Top Picks for You")
     cols = st.columns(5)
     for i, movie in enumerate(st.session_state['recs']):
         with cols[i]:
-            # Fetch poster with fallback
             poster = fetch_poster(movie.movie_id)
             st.image(poster)
-
-            # Use a container to keep text height consistent
-            with st.container(height=70, border=False):
+            # Fixed height container to keep buttons aligned
+            with st.container(height=60, border=False):
                 st.markdown(f"**{movie.title}**")
-
-            if st.button("Details", key=f"det_{movie.movie_id}", use_container_width=True):
+            if st.button("Details", key=f"rec_{movie.movie_id}", use_container_width=True):
                 show_details(movie.movie_id)
+
+st.markdown("---") # Visual separator
+
+# --- 4. TRENDING SECTION (Now below recommendations) ---
+st.markdown("### 🔥 Trending This Week")
+# (Your existing Trending/Slider code here...)
