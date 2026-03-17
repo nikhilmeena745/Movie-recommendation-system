@@ -81,18 +81,21 @@ st.markdown("""
 
 
 
-# --- 6. HEADER & SEARCH ---
+# --- 1. Custom CSS here ---
+st.markdown(""" <style> ... </style> """, unsafe_allow_html=True)
+
+# --- 2. DEFINE SIDEBAR FIRST (This creates the 'min_rating' variable) ---
+st.sidebar.title("🔍 Filters")
+min_rating = st.sidebar.slider("Minimum Rating", 0.0, 10.0, 5.0)
+
+# --- 3. SEARCH BAR & BUTTON (Now 'min_rating' exists and can be used) ---
 st.title('CineMatch Pro')
-selected_movie_name = st.selectbox(
-    "Search for a movie you liked:",
-    movies['title'].values,
-    key="main_search"
-)
+selected_movie_name = st.selectbox("Search for a movie you liked:", movies['title'].values, key="main_search")
 
 if st.button('Get Recommendations'):
     with st.spinner('Finding matches...'):
         recs = get_recommendations(selected_movie_name)
-        # Apply rating filter
+        # This will no longer throw a NameError
         filtered_recs = [m for m in recs if m.get('vote_average', 0) >= min_rating]
         st.session_state['recs'] = filtered_recs[:5]
 
