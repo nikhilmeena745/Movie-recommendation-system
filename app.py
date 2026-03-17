@@ -195,16 +195,6 @@ with col_search:
         key="main_search"
     )
 
-with col_filter:
-    # FIX: min_rating was used but never defined in the original code
-    min_rating = st.slider(
-        "⭐ Min Rating",
-        min_value=0.0,
-        max_value=10.0,
-        value=0.0,
-        step=0.5,
-        key="rating_filter"
-    )
 
 
 # --- 7. GET RECOMMENDATIONS BUTTON ---
