@@ -4,7 +4,7 @@ import pandas as pd
 import requests
 
 # --- 1. PAGE CONFIG (Must be the very first Streamlit command) ---
-st.set_page_config(page_title="CineMatch Pro", layout="wide", page_icon="🎬")
+st.set_page_config(page_title="YourNext", layout="wide", page_icon="🎬")
 
 
 # --- 2. DATA LOADING & CACHING ---
@@ -120,7 +120,7 @@ st.markdown("""
 
 
 # --- 5. HEADER & FILTERS ---
-st.title('🎬 CineMatch Pro')
+st.title('🎬 YourNext')
 st.markdown("*Your personal AI-powered movie recommendation engine*")
 st.markdown("---")
 
