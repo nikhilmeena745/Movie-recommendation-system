@@ -78,30 +78,48 @@ def show_details(movie_id):
             st.video(f"https://www.youtube.com/watch?v={trailer['key']}")
 
 
-# --- 4. SIDEBAR FILTERS ---
-st.sidebar.title("🔍 Search Filters")
-min_rating = st.sidebar.slider("Minimum Rating", 0.0, 10.0, 5.0)
-year_range = st.sidebar.select_slider("Release Year", options=sorted(movies['release_year'].unique()),
-                                      value=(2000, 2024)) if 'release_year' in movies else None
-
-# --- 5. DYNAMIC HERO SECTION ---
-st.markdown("### 🔥 Trending Now")
+# --- 5. DYNAMIC TRENDING ROW ---
+st.markdown("### 🔥 Trending This Week")
 
 try:
-    # Fetch current trending movie backdrop
-    trending_url = "https://api.themoviedb.org/3/trending/movie/day?api_key=98d38df69b8f66e1b16e9f207c51a8a6"
-    trending_data = requests.get(trending_url).json()
-    first_movie = trending_data['results'][0]
-    backdrop_path = first_movie.get('backdrop_path')
+    trending_url = "https://api.themoviedb.org/3/trending/movie/week?api_key=98d38df69b8f66e1b16e9f207c51a8a6"
+    trending_data = requests.get(trending_url).json().get('results', [])
 
-    if backdrop_path:
-        st.image(f"https://image.tmdb.org/t/p/original/{backdrop_path}", use_container_width=True)
-        st.info(f"Featured today: **{first_movie.get('title')}**")
-    else:
-        # Fallback image if TMDB fails
-        st.image("https://via.placeholder.com/1200x450?text=Cinematch+Pro", use_container_width=True)
+    # We create a horizontal layout using tabs to act as a 'slider'
+    # Or simply a long row of columns
+    if trending_data:
+        # Show top 10 trending movies
+        num_trending = 10
+        cols_trending = st.columns(num_trending)
+
+        # We use a container with a fixed height and horizontal scroll
+        # Note: Streamlit columns wrap by default. To make it a 'slider',
+        # we can use st.tabs for different 'pages' of trending movies.
+
+        tab1, tab2 = st.tabs(["Trending Page 1", "Trending Page 2"])
+
+        with tab1:
+            t_cols = st.columns(5)
+            for idx in range(5):
+                movie = trending_data[idx]
+                with t_cols[idx]:
+                    st.image(f"https://image.tmdb.org/t/p/w500/{movie.get('poster_path')}")
+                    st.caption(movie.get('title')[:20] + "...")
+                    if st.button("Details", key=f"trend_{movie.get('id')}"):
+                        show_details(movie.get('id'))
+
+        with tab2:
+            t_cols_2 = st.columns(5)
+            for idx in range(5, 10):
+                movie = trending_data[idx]
+                with t_cols_2[idx - 5]:
+                    st.image(f"https://image.tmdb.org/t/p/w500/{movie.get('poster_path')}")
+                    st.caption(movie.get('title')[:20] + "...")
+                    if st.button("Details", key=f"trend_{movie.get('id')}"):
+                        show_details(movie.get('id'))
+
 except Exception as e:
-    st.write("Trending content temporarily unavailable.")
+    st.error("Could not load trending movies.")
 
 st.image("https://image.tmdb.org/t/p/original/6EL63AnMvYH8fw83Uo3q4pLbC3Z.jpg",
          use_container_width=True)  # Example Backdrop
