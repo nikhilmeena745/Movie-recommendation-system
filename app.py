@@ -3,113 +3,119 @@ import pickle
 import pandas as pd
 import requests
 
+# --- 1. SET PAGE CONFIG ---
+st.set_page_config(page_title="CineMatch Pro", layout="wide", page_icon="🎬")
 
-# Load data with caching
+# --- 2. CUSTOM CSS (The "Professional" Look) ---
+st.markdown("""
+    <style>
+    /* Main Background */
+    .stApp {
+        background-color: #141414;
+        color: white;
+    }
+    /* Button Styling */
+    div.stButton > button:first-child {
+        background-color: #E50914;
+        color: white;
+        border: none;
+        padding: 0.5rem 2rem;
+        font-weight: bold;
+    }
+    div.stButton > button:hover {
+        background-color: #ff0a16;
+        border: none;
+        color: white;
+    }
+    /* Image Cards */
+    img {
+        border-radius: 8px;
+        transition: transform .3s;
+    }
+    img:hover {
+        transform: scale(1.05);
+        cursor: pointer;
+    }
+    /* Hide Streamlit Branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+    """, unsafe_allow_html=True)
+
+
+# --- 3. DATA LOADING & FUNCTIONS ---
 @st.cache_data
 def load_data():
-    # Ensure these files are in the same directory as app.py
     movies_dict = pickle.load(open('movie_dict.pkl', 'rb'))
     movies = pd.DataFrame(movies_dict)
     similarity = pickle.load(open('similarity.pkl', 'rb'))
     return movies, similarity
 
 
-@st.dialog("Movie Overview")
-def show_movie_details(movie_id):
-    # Fetch Basic Info
-    url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=98d38df69b8f66e1b16e9f207c51a8a6"
-    response = requests.get(url).json()
-
-    # Fetch Video/Trailer Info
-    video_url = f"https://api.themoviedb.org/3/movie/{movie_id}/videos?api_key=98d38df69b8f66e1b16e9f207c51a8a6"
-    video_response = requests.get(video_url).json()
-
-    # Find the official YouTube trailer from the results
-    trailer_key = None
-    if 'results' in video_response:
-        for video in video_response['results']:
-            if video['type'] == 'Trailer' and video['site'] == 'YouTube':
-                trailer_key = video['key']
-                break
-
-    # --- UI Layout inside Dialog ---
-    col1, col2 = st.columns([1, 2])
-
-    with col1:
-        st.image(f"https://image.tmdb.org/t/p/w500/{response.get('poster_path')}")
-        st.write(f"⭐ **{response.get('vote_average', 0):.1f}/10**")
-
-    with col2:
-        st.subheader(response.get('title'))
-        st.caption(f"Released: {response.get('release_date')}")
-        st.write(response.get('overview'))
-    st.link_button("View on TMDB", f"https://www.themoviedb.org/movie/{movie_id}")
-
-    # --- Add the Trailer below the description ---
-    if trailer_key:
-        st.write("---")
-        st.write("### 🎬 Watch Trailer")
-        st.video(f"https://www.youtube.com/watch?v={trailer_key}")
-    else:
-        st.info("Trailer not available for this movie.")
-
-
-
 movies, similarity = load_data()
 
 
-def fetch_poster(movie_id):
-    url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=98d38df69b8f66e1b16e9f207c51a8a6"
-    try:
-        data = requests.get(url).json()
-        poster_path = data.get('poster_path')
-        if poster_path:
-            return "https://image.tmdb.org/t/p/w500/" + poster_path
-    except:
-        pass
-    return "https://via.placeholder.com/500x750?text=No+Poster"
+def fetch_movie_data(movie_id):
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=98d38df69b8f66e1b16e9f207c51a8a6&append_to_response=videos"
+    return requests.get(url).json()
 
 
-def get_recommendations(movie_title):
-    idx = movies[movies['title'] == movie_title].index[0]
-    sim_scores = list(enumerate(similarity[idx]))
-    # Get top 20 to allow for re-ranking
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:21]
+@st.dialog("Movie Details")
+def show_details(movie_id):
+    data = fetch_movie_data(movie_id)
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.image(f"https://image.tmdb.org/t/p/w500/{data.get('poster_path')}")
+    with col2:
+        st.header(data.get('title'))
+        st.write(f"📅 {data.get('release_date')}  |  ⭐ {data.get('vote_average'):.1f}/10")
+        st.write(data.get('overview'))
 
-    recommendation_list = []
-    for i in sim_scores:
-        movie_idx = i[0]
-        content_sim = i[1]
-        # Normalize rating (assuming vote_average exists)
-        rating = movies.iloc[movie_idx].get('vote_average', 0) / 10
-        weighted_score = (content_sim * 0.8) + (rating * 0.2)
-
-        recommendation_list.append({
-            'title': movies.iloc[movie_idx].title,
-            'tmdb_id': movies.iloc[movie_idx].movie_id,
-            'score': weighted_score
-        })
-
-    return sorted(recommendation_list, key=lambda x: x['score'], reverse=True)[:5]
+        # Check for trailer
+        videos = data.get('videos', {}).get('results', [])
+        trailer = next((v for v in videos if v['type'] == 'Trailer'), None)
+        if trailer:
+            st.video(f"https://www.youtube.com/watch?v={trailer['key']}")
 
 
-# --- UI LOGIC ---
-st.title('Movie Recommender System')
+# --- 4. SIDEBAR FILTERS ---
+st.sidebar.title("🔍 Search Filters")
+min_rating = st.sidebar.slider("Minimum Rating", 0.0, 10.0, 5.0)
+year_range = st.sidebar.select_slider("Release Year", options=sorted(movies['release_year'].unique()),
+                                      value=(2000, 2024)) if 'release_year' in movies else None
 
-selected_movie = st.selectbox("Select a movie:", movies['title'].values)
+# --- 5. HERO SECTION ---
+# Displaying a static "Featured" backdrop (You can make this dynamic later)
+st.markdown("### 🔥 Trending Now")
+st.image("https://image.tmdb.org/t/p/original/6EL63AnMvYH8fw83Uo3q4pLbC3Z.jpg",
+         use_container_width=True)  # Example Backdrop
 
-# Use Session State to keep results on screen
+# --- 6. RECOMMENDATION LOGIC ---
+st.markdown("---")
+selected_movie = st.selectbox("Search for a movie you liked:", movies['title'].values)
+
 if st.button('Get Recommendations'):
-    st.session_state['recommendations'] = get_recommendations(selected_movie)
+    idx = movies[movies['title'] == selected_movie].index[0]
+    distances = sorted(list(enumerate(similarity[idx])), reverse=True, key=lambda x: x[1])[1:11]
 
-# Check if recommendations exist in session state
-if 'recommendations' in st.session_state:
+    # Filter by rating if available
+    rec_movies = []
+    for i in distances:
+        m_data = movies.iloc[i[0]]
+        # Basic check to filter out low-rated movies from the pkl if 'vote_average' is there
+        if m_data.get('vote_average', 10) >= min_rating:
+            rec_movies.append(m_data)
+
+    st.session_state['recs'] = rec_movies[:5]
+
+# --- 7. DISPLAY GRID ---
+if 'recs' in st.session_state:
     cols = st.columns(5)
-    for i, movie in enumerate(st.session_state['recommendations']):
+    for i, movie in enumerate(st.session_state['recs']):
         with cols[i]:
-            st.image(fetch_poster(movie['tmdb_id']))
-            st.caption(movie['title'])
-
-            # Use the unique tmdb_id for the button key
-            if st.button("Details", key=f"details_{movie['tmdb_id']}"):
-                show_movie_details(movie['tmdb_id'])
+            poster_url = f"https://image.tmdb.org/t/p/w500/{movie.movie_id}"  # Assuming movie_id maps to tmdb_id
+            # Fetch real poster path if needed
+            st.image(f"https://image.tmdb.org/t/p/w500/{fetch_movie_data(movie.movie_id).get('poster_path')}")
+            st.caption(movie.title)
+            if st.button("Details", key=f"det_{movie.movie_id}"):
+                show_details(movie.movie_id)
