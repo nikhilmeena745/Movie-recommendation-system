@@ -84,9 +84,25 @@ min_rating = st.sidebar.slider("Minimum Rating", 0.0, 10.0, 5.0)
 year_range = st.sidebar.select_slider("Release Year", options=sorted(movies['release_year'].unique()),
                                       value=(2000, 2024)) if 'release_year' in movies else None
 
-# --- 5. HERO SECTION ---
-# Displaying a static "Featured" backdrop (You can make this dynamic later)
+# --- 5. DYNAMIC HERO SECTION ---
 st.markdown("### 🔥 Trending Now")
+
+try:
+    # Fetch current trending movie backdrop
+    trending_url = "https://api.themoviedb.org/3/trending/movie/day?api_key=98d38df69b8f66e1b16e9f207c51a8a6"
+    trending_data = requests.get(trending_url).json()
+    first_movie = trending_data['results'][0]
+    backdrop_path = first_movie.get('backdrop_path')
+
+    if backdrop_path:
+        st.image(f"https://image.tmdb.org/t/p/original/{backdrop_path}", use_container_width=True)
+        st.info(f"Featured today: **{first_movie.get('title')}**")
+    else:
+        # Fallback image if TMDB fails
+        st.image("https://via.placeholder.com/1200x450?text=Cinematch+Pro", use_container_width=True)
+except Exception as e:
+    st.write("Trending content temporarily unavailable.")
+
 st.image("https://image.tmdb.org/t/p/original/6EL63AnMvYH8fw83Uo3q4pLbC3Z.jpg",
          use_container_width=True)  # Example Backdrop
 
@@ -108,14 +124,30 @@ if st.button('Get Recommendations'):
 
     st.session_state['recs'] = rec_movies[:5]
 
+def fetch_poster(movie_id):
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=98d38df69b8f66e1b16e9f207c51a8a6"
+    try:
+        data = requests.get(url).json()
+        path = data.get('poster_path')
+        if path:
+            return "https://image.tmdb.org/t/p/w500/" + path
+    except:
+        pass
+    # PROFESSIONAL FALLBACK: This prevents the broken "0" icon
+    return "https://via.placeholder.com/500x750?text=No+Poster+Available"
+
 # --- 7. DISPLAY GRID ---
 if 'recs' in st.session_state:
     cols = st.columns(5)
     for i, movie in enumerate(st.session_state['recs']):
         with cols[i]:
-            poster_url = f"https://image.tmdb.org/t/p/w500/{movie.movie_id}"  # Assuming movie_id maps to tmdb_id
-            # Fetch real poster path if needed
-            st.image(f"https://image.tmdb.org/t/p/w500/{fetch_movie_data(movie.movie_id).get('poster_path')}")
-            st.caption(movie.title)
-            if st.button("Details", key=f"det_{movie.movie_id}"):
+            # Fetch poster with fallback
+            poster = fetch_poster(movie.movie_id)
+            st.image(poster)
+
+            # Use a container to keep text height consistent
+            with st.container(height=70, border=False):
+                st.markdown(f"**{movie.title}**")
+
+            if st.button("Details", key=f"det_{movie.movie_id}", use_container_width=True):
                 show_details(movie.movie_id)
