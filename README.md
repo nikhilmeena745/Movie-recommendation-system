@@ -9,7 +9,6 @@ Click the image below to watch a full video demonstration of the project in acti
 
 [![Watch the Demo](https://img.youtube.com/vi/kwGb5y-7UQQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=kwGb5y-7UQQ)
 
-> **Note:** Replace `[YOUR_YOUTUBE_VIDEO_ID]` in the markdown above with your actual YouTube video ID (the string of characters at the end of your YouTube link).
 
 ## ✨ Features
 * **Personalized Recommendations:** Suggests the top 5 most similar movies based on the user's selection.
