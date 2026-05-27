@@ -7,7 +7,7 @@ A machine learning-based web application that recommends movies based on user pr
 
 Click the image below to watch a full video demonstration of the project in action:
 
-[![Watch the Demo](https://img.youtube.com/vi/[7UQQ]/maxresdefault.jpg)](https://www.youtube.com/watch?v=[7UQQ])
+[![Watch the Demo](https://img.youtube.com/vi/kwGb5y-7UQQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=kwGb5y-7UQQ)
 
 > **Note:** Replace `[YOUR_YOUTUBE_VIDEO_ID]` in the markdown above with your actual YouTube video ID (the string of characters at the end of your YouTube link).
 
